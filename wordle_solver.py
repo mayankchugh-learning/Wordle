@@ -2,7 +2,7 @@
 Votee Wordle Solver
 ====================
 Automatically solves Wordle puzzles via the Votee API.
-API: https://wordle.votee.dev:8000
+API base URL is loaded from the WORDLE_BASE_URL environment variable.
 
 Endpoints used:
   GET /random?guess=WORD&seed=42   — guess against a random word
@@ -12,11 +12,11 @@ Endpoints used:
 Author: Mayank Chugh
 """
 
+import os
 import requests
 import urllib.request
 import sys
 from collections import Counter
-
 
 def _stdout_accepts_unicode() -> bool:
     """True if stdout can encode emoji; False for cp1252 etc. (use ASCII fallback)."""
@@ -36,13 +36,37 @@ def _stdout_accepts_unicode() -> bool:
         return False
 
 
+def load_local_env(path=".env"):
+    """Load simple KEY=VALUE pairs from a local .env file."""
+    if not os.path.exists(path):
+        return
+
+    with open(path, "r", encoding="utf-8") as env_file:
+        for raw_line in env_file:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip("'\"")
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+
+load_local_env()
+
 _USE_UNICODE = _stdout_accepts_unicode()
 
 
 # ── CONFIG ──────────────────────────────────────────────────────────────────
-BASE_URL = "https://wordle.votee.dev:8000"
+BASE_URL = os.getenv("WORDLE_BASE_URL", "").strip()
 WORD_SIZE = 5
 MAX_GUESSES = 6
+WORD_LIST_URLS = [
+    url.strip()
+    for url in os.getenv("WORD_LIST_URLS", "").split(",")
+    if url.strip()
+]
 
 # Best opening words — chosen for maximum letter coverage
 OPENING_WORDS = ["crane", "lousy", "might"]
@@ -72,12 +96,8 @@ def load_words():
 
     # Download and merge multiple online lists for better API coverage.
     print("Downloading word lists...")
-    urls = [
-        "https://raw.githubusercontent.com/tabatkins/wordle-list/main/words",
-        "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt",
-    ]
     merged = set()
-    for url in urls:
+    for url in WORD_LIST_URLS:
         try:
             with urllib.request.urlopen(url, timeout=15) as response:
                 content = response.read().decode()
@@ -305,6 +325,9 @@ def solve(mode="random", seed=42, target=None):
         seed:   integer seed for /random mode (keeps same word across runs)
         target: specific word for /word mode
     """
+    if not BASE_URL:
+        raise ValueError("WORDLE_BASE_URL is missing. Set it in your .env file.")
+
     if _USE_UNICODE:
         print(f"\n🟩 Votee Wordle Solver")
     else:

@@ -20,6 +20,7 @@ ENV/
 # Local environment files
 .env
 .env.*
+!.env.example
 
 # IDE files
 .vscode/
@@ -28,3 +29,6 @@ ENV/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Project docs/images (do not commit screenshots)
+docs/**/*.png
