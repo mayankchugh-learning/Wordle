@@ -110,8 +110,7 @@ This matches the official Wordle rules precisely.
 Downloads and merges two sources for maximum API coverage:
 - Official Wordle word list (tabatkins/wordle-list) — 2,309 real Wordle words
 - Extended English word list (dwyl/english-words) — 15,000+ five-letter words
-- Merged, deduplicated, sorted — ~16,000 total candidates
-- Cached locally as `wordle_words.txt` after first download
+- Merged, deduplicated, sorted — ~20,000 total candidates
 
 ---
 
@@ -138,35 +137,45 @@ python wordle_solver.py
 
 ## Usage
 
-```python
-# Solve a random word (seed fixes the word for reproducible testing)
-solve(mode="random", seed=42)
+```bash
+# Solve a random word (default — seed 42)
+python wordle_solver.py
 
 # Solve today's daily puzzle
-solve(mode="daily")
+python wordle_solver.py --mode daily
+
+# Solve a random word with a specific seed
+python wordle_solver.py --mode random --seed 99
 
 # Solve a specific known word (useful for testing)
-solve(mode="word", target="crane")
+python wordle_solver.py --mode word --target crane
+
+# Run multiple games and see win rate statistics
+python wordle_solver.py --games 5
 ```
 
-**Run multiple seeds from command line:**
-```bash
-python -c "from wordle_solver import solve; solve(mode='random', seed=1)"
-python -c "from wordle_solver import solve; solve(mode='random', seed=7)"
-python -c "from wordle_solver import solve; solve(mode='daily')"
-```
+### Command Line Arguments
+
+| Argument | Options | Default | Description |
+|---|---|---|---|
+| `--mode` | random, daily, word | random | Game mode |
+| `--seed` | any integer | 42 | Fixes the random word for reproducibility |
+| `--target` | any 5-letter word | None | Target word for word mode |
+| `--games` | any integer | 1 | Number of games to play |
 
 ---
 
 ## Test Results
 
-| Mode | Word | Result | Guesses |
+| Command | Word | Result | Guesses |
 |---|---|---|---|
-| `seed=42` | WROTE | ✅ Solved | 5 |
-| `seed=1` | FIERY | ✅ Solved | 4 |
-| `seed=7` | ARSON | ✅ Solved | 4 |
-| `seed=99` | CODEX | ✅ Solved | 3 |
-| `daily` | (today's word) | tested | varies |
+| `--mode random --seed 42` | WROTE | ✅ Solved | 5 |
+| `--mode random --seed 1` | FIERY | ✅ Solved | 4 |
+| `--mode random --seed 7` | ARSON | ✅ Solved | 4 |
+| `--mode random --seed 99` | CODEX | ✅ Solved | 3 |
+| `--mode word --target crane` | CRANE | ✅ Solved | 1 |
+| `--games 3` | STORM, FIERY, SMELT | ✅ 3/3 (100% win rate) | avg 4-5 |
+| `--mode daily` | varies | tested | varies |
 
 ---
 
@@ -194,8 +203,7 @@ Early versions sometimes guessed words outside the filtered candidate list. Whil
 ```
 wordle-votee/
 ├── wordle_solver.py    # Main solver — all logic in one file
-├── README.md           # This file
-└── wordle_words.txt    # Auto-generated word cache (created on first run)
+└── README.md           # This file
 ```
 
 ---
@@ -206,6 +214,7 @@ wordle-votee/
 - On Windows without UTF-8 encoding, emoji automatically fall back to ASCII: G/Y/.
 - The `seed` parameter is for testing only — it fixes the random word for reproducibility
 - All API calls include a 10-second timeout and proper error handling
+- Word lists are downloaded fresh on each run — internet connection required
 
 ---
 
