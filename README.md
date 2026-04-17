@@ -151,7 +151,7 @@ python wordle_solver.py --mode random --seed 99
 python wordle_solver.py --mode word --target crane
 
 # Run multiple games and see win rate statistics
-python wordle_solver.py --games 5
+python wordle_solver.py --games 3
 ```
 
 ### Command Line Arguments
